@@ -1,0 +1,241 @@
+<head>
+  <meta charset="utf-8">
+  <title>Update Status</title>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+  <script src="../github.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      outline: none;
+    }
+
+    body {
+      background: #eee;
+      color: #444;
+      font-family: Avenir, "Helvetica Neue", Helvetica, sans-serif;
+      padding: 40px 12px;
+      margin: 0;
+      text-align: center;
+      font-size: 16px;
+      transition: box-shadow 1s ease-in-out;
+      box-shadow: inset 0 1px rgba(19, 191, 17, 0);
+    }
+
+    html[updated] body {
+      box-shadow: inset 0 2px rgb(19, 191, 17);
+      transition: none;
+    }
+
+    input[type="checkbox"], input[type="checkbox"] + label, input[type="checkbox"] + label::before, input[type="checkbox"] + label::after {
+      transition: .25s ease-in-out;
+    }
+
+    input[type="checkbox"],
+    input[type="checkbox"]:active {
+      position: absolute;
+      top: -5000px;
+      height: 0;
+      width: 0;
+      opacity: 0;
+      border: none;
+      outline: none;
+    }
+
+    input[type="checkbox"] + label {
+      display: block;
+      margin: 0 auto 40px;
+      position: relative;
+      padding: 12px;
+      font-size: 16px;
+      line-height: 16px;
+      width: 60px;
+      height: 36px;
+      border-radius: 18px;
+      background: #f8f8f8;
+      cursor: pointer;
+    }
+
+    input[type="checkbox"] + label::before {
+      content: '';
+      display: block;
+      position: absolute;
+      z-index: 1;
+      line-height: 34px;
+      text-indent: 40px;
+      height: 36px;
+      width: 36px;
+      border-radius: 100%;
+      top: 0px;
+      left: 0px;
+      right: auto;
+      background: white;
+      box-shadow: 0 3px 3px rgba(0, 0, 0, .2), 0 0 0 2px #dddddd;
+    }
+
+    input[type="checkbox"] + label::after {
+      content: attr(data-off);
+      display: block;
+      position: absolute;
+      z-index: 0;
+      top: 0;
+      left: -300px;
+      padding: 12px;
+      height: 100%;
+      width: 300px;
+      text-align: right;
+      color: #999;
+      white-space: nowrap;
+    }
+
+    input[type="checkbox"]:checked + label {
+      box-shadow: inset 0 0 0 20px rgb(19, 191, 17), 0 0 0 2px rgb(19, 191, 17);
+    }
+
+    input[type="checkbox"]:checked + label::before {
+      left: calc(100% - 36px);
+      box-shadow: 0 0 0 2px transparent, 0 3px 3px rgba(0, 0, 0, .3);
+    }
+
+    input[type="checkbox"]:checked + label::after {
+      content: attr(data-on);
+      left: 60px;
+      width: 36px;
+    }
+
+    input[type="checkbox"] + label {
+      box-shadow: inset 0 0 0 0px rgb(19, 191, 17), 0 0 0 2px #dddddd;
+    }
+
+    input[type="checkbox"]:checked + label {
+      box-shadow: inset 0 0 0 18px rgb(19, 191, 17), 0 0 0 2px rgb(19, 191, 17);
+    }
+
+    input[type="checkbox"]:checked + label::after {
+      color: rgb(19, 191, 17);
+    }
+
+    input[type="password"], textarea {
+      font-family: inherit;
+      display: block;
+      margin: 0 auto 20px;
+      border: 0px;
+      border-radius: 4px;
+      background: #fff;
+      color: #444;
+      font-size: 16px;
+      width: 300px;
+      max-width: 100%;
+      padding: .6em .8em;
+    }
+
+    input[type="password"] {
+      text-align: center;
+    }
+
+    textarea {
+      height: calc(100vh - 300px);
+      min-height: 100px;
+      resize: none;
+    }
+
+    .username {
+      display: none
+    }
+
+    button {
+      -webkit-font-smoothing: subpixel-antialiased;
+      -moz-osx-font-smoothing: auto;
+      position: relative;
+      text-rendering: optimizeLegibility;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-appearance: none;
+      appearance: none;
+      display: inline-block;
+      cursor: pointer;
+      border: 0;
+      border-radius: .25em;
+      font-size: 1em;
+      padding: .6em 2em;
+      margin: 0;
+      text-align: center;
+      font-family: Avenir New,Avenir,Helvetica Neue,sans-serif;
+      font-weight: 300;
+      letter-spacing: .04em;
+      text-indent: .04em;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<input id="free" type="checkbox" checked>
+<label for="free" data-off="busy" data-on="free"></label>
+
+<input class="username" type="text" name="username" value="adamschwartz">
+<input class="password" type="password" name="password" value="" placeholder="password">
+
+<textarea class="message" placeholder="message"></textarea>
+
+<button class="update">Update</button>
+
+<script>
+  var $ = function(selector) {
+    return document.querySelector(selector);
+  };
+
+  if (localStorage.password) {
+    $('.password').value = localStorage.password;
+  }
+
+  var updateStatus = function(jsonData) {
+    if ($('.password').value) {
+      localStorage.password = $('.password').value;
+    }
+
+    var gh = new GitHub({
+      username: $('.username').value,
+      password: $('.password').value
+    });
+
+    var repo = gh.getRepo('adamschwartz', 'status');
+
+    jsonData.now = + new Date;
+
+    repo.writeFile(
+      'gh-pages',
+      'status.json',
+      JSON.stringify(jsonData),
+      'Update status to ' + (jsonData.free ? 'free' : 'busy') + ' at ' + jsonData.now,
+      {},
+      updated
+    );
+  };
+
+  var updated = function() {
+    document.documentElement.setAttribute('updated', '');
+    document.body.clientHeight;
+    document.documentElement.removeAttribute('updated');
+  };
+
+  var update = function() {
+    var free = checkbox.checked;
+    var message = $('.message').value || '';
+    updateStatus({ free, message });
+  };
+
+  var checkbox = $('#free');
+  checkbox.addEventListener('click', function(){
+    if (!$('.password').value) {
+      checkbox.checked = !checkbox.checked;
+      return;
+    }
+
+    update();
+  });
+
+  $('.update').addEventListener('click', function(){
+    update();
+  });
+</script>

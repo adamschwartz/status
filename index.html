@@ -1,4 +1,3 @@
-
 <head>
   <meta charset="utf-8">
   <title>Status</title>
@@ -36,38 +35,41 @@
       font-size: 50%;
     }
 
-    [status="trouble"] {
-      background: #bc0000;
+    [free="false"] {
+      background: #ccc;
     }
 
-    [status="busy"] {
-      background: #ffc107;
-    }
-
-    [status="free"] {
+    [free="true"] {
       background: #4caf50;
     }
 
-    .text {
+    .message {
       font-family: Avenir, "Helvetica Neue", Helvetica, sans-serif;
       font-size: 1.5em;
       margin-top: .125em
+    }
+
+    .updated {
+      opacity: .5
     }
   </style>
 </head>
 
 <div class="status">
-  <div class="text"></div>
+  <div class="message"></div>
+  <div class="updated"></div>
 </div>
 
 <script>
+  var timeSince = function(e){var t,n,r;return r=Math.floor((new Date-e)/1e3),t=Math.floor(r/31536e3),t>1?(n=Math.floor(r/2592e3),n-=12*t,3>n?t+" years":9>n?d(t)+" and a half years":"about "+(t+1)+" years"):(t=Math.floor(r/2592e3),t>1?t+" months":(t=Math.floor(r/86400),t>1?t+" days":(t=Math.floor(r/3600),t>1?t+" hours":(t=Math.floor(r/60),t>1?t+" minutes":Math.floor(r)+" seconds"))))};
+
   var $ = function(selector) {
     return document.querySelector(selector);
   };
 
   var request = new XMLHttpRequest();
 
-  request.open('GET', 'status.json', true);
+  request.open('GET', 'https://raw.githubusercontent.com/adamschwartz/status/gh-pages/status.json', true);
 
   request.onload = function() {
     if (request.status < 200 || request.status > 400) {
@@ -76,8 +78,9 @@
 
     var data = JSON.parse(request.responseText);
 
-    $('.status').setAttribute('status', data.status);
-    $('.status .text').innerHTML = data.status;
+    $('.status').setAttribute('free', data.free);
+    $('.status .message').textContent = data.message;
+    $('.status .updated').textContent = 'updated ' + timeSince(new Date(data.now)) + ' ago';
 
     document.documentElement.setAttribute('loaded', '');
   };
